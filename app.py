@@ -72,6 +72,9 @@ def main():
                         
                         def getvalue(self):
                             return self._data
+                        
+                        def read(self):
+                            return self._data
                     
                     uploaded_files = [FakeUploadedFile(f['filename'], f['data']) for f in extracted_files]
                     

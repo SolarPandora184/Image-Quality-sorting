@@ -18,9 +18,11 @@ A professional Streamlit-based web application for bulk image quality assessment
 ## 🚀 Quick Start
 
 ### Running on Replit
-1. Open the project in Replit
-2. The Streamlit app will automatically start
-3. Access the application at the provided URL
+1. **Fork this Repl:** Click the "Fork" button to create your own copy
+2. **Run automatically:** The Streamlit app will start automatically
+3. **Access your app:** Use the provided URL to access your running application
+
+**Direct Replit Link:** [Open in Replit](https://replit.com/@yourusername/your-repl-name)
 
 ### Running Locally
 1. Install dependencies:

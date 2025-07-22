@@ -109,27 +109,23 @@
         </ul>
         
         <a href="#" id="launchApp" class="cta-button">🚀 Launch Application</a>
+        <a href="#" id="viewCode" class="cta-button" style="background: linear-gradient(45deg, #4ecdc4, #44a08d);">📂 View Source Code</a>
         
         <div class="note">
-            <strong>Note:</strong> This application requires a Streamlit server to run. 
-            Click the button above to access the full application on Replit or your deployed server.
+            <strong>Note:</strong> This is a Python Streamlit application. You can run it directly on Replit or fork the repository to customize it.
         </div>
     </div>
     
     <script>
         document.getElementById('launchApp').addEventListener('click', function(e) {
             e.preventDefault();
-            
-            // Try to detect if we're on GitHub Pages and redirect to Replit
-            const currentHost = window.location.hostname;
-            
-            if (currentHost.includes('github.io') || currentHost.includes('githubusercontent.com')) {
-                // Redirect to your Replit app
-                window.open('https://your-replit-url.replit.app', '_blank');
-            } else {
-                // If running locally or on a server, try to access the Streamlit app
-                window.location.href = 'http://localhost:5000';
-            }
+            window.open('https://replit.com/@yourusername/your-repl-name', '_blank');
+        });
+        
+        document.getElementById('viewCode').addEventListener('click', function(e) {
+            e.preventDefault();
+            // Replace with your actual Replit repository URL
+            window.open('https://replit.com/@yourusername/your-repl-name?v=1', '_blank');
         });
     </script>
 </body>

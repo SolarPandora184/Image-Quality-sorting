@@ -27,15 +27,31 @@ def main():
     
     # File upload section
     st.header("📁 Upload Images")
+    st.info("💡 **Tip**: You can select hundreds of images at once! The system supports up to 1GB total upload size.")
+    
     uploaded_files = st.file_uploader(
-        "Choose image files",
-        type=['png', 'jpg', 'jpeg', 'bmp', 'tiff'],
+        "Choose image files (select multiple images using Ctrl/Cmd + click)",
+        type=['png', 'jpg', 'jpeg', 'bmp', 'tiff', 'webp'],
         accept_multiple_files=True,
-        help="Supported formats: PNG, JPG, JPEG, BMP, TIFF"
+        help="Supported formats: PNG, JPG, JPEG, BMP, TIFF, WebP. Maximum total size: 1GB. Select multiple files using Ctrl/Cmd + click or Ctrl/Cmd + A to select all."
     )
     
     if uploaded_files:
-        st.success(f"✅ {len(uploaded_files)} images uploaded successfully!")
+        # Calculate total file size
+        total_size_mb = sum(len(file.getvalue()) for file in uploaded_files) / (1024 * 1024)
+        
+        st.success(f"✅ {len(uploaded_files)} images uploaded successfully! (Total size: {total_size_mb:.1f} MB)")
+        
+        # Show file list if there are many files
+        if len(uploaded_files) > 10:
+            with st.expander(f"📋 View all {len(uploaded_files)} uploaded files"):
+                for i, file in enumerate(uploaded_files, 1):
+                    file_size_mb = len(file.getvalue()) / (1024 * 1024)
+                    st.text(f"{i:3d}. {file.name} ({file_size_mb:.1f} MB)")
+        
+        # Show warning for very large batches
+        if len(uploaded_files) > 100:
+            st.warning(f"⚠️ You've uploaded {len(uploaded_files)} images. Processing may take several minutes. Consider analyzing in smaller batches for faster results.")
         
         # Analyze button
         if st.button("🔍 Analyze Images", type="primary"):
@@ -51,16 +67,28 @@ def analyze_images(uploaded_files):
     analyzer = ImageQualityAnalyzer()
     results = []
     
-    # Progress bar
+    # Progress tracking with estimated time
     progress_bar = st.progress(0)
     status_text = st.empty()
+    time_estimate = st.empty()
+    
+    import time
+    start_time = time.time()
     
     for i, uploaded_file in enumerate(uploaded_files):
         try:
-            # Update progress
+            # Update progress with time estimation
             progress = (i + 1) / len(uploaded_files)
             progress_bar.progress(progress)
             status_text.text(f"Analyzing {uploaded_file.name}... ({i+1}/{len(uploaded_files)})")
+            
+            # Calculate estimated time remaining
+            if i > 0:
+                elapsed_time = time.time() - start_time
+                avg_time_per_image = elapsed_time / i
+                remaining_images = len(uploaded_files) - i
+                estimated_remaining = avg_time_per_image * remaining_images
+                time_estimate.text(f"⏱️ Estimated time remaining: {estimated_remaining:.1f} seconds")
             
             # Read image
             image_bytes = uploaded_file.read()
@@ -90,12 +118,15 @@ def analyze_images(uploaded_files):
     # Clear progress indicators
     progress_bar.empty()
     status_text.empty()
+    time_estimate.empty()
     
     # Store results in session state
     st.session_state.analysis_results = results
     st.session_state.uploaded_images = uploaded_files
     
-    st.success("✅ Analysis complete!")
+    # Show completion summary
+    total_time = time.time() - start_time
+    st.success(f"✅ Analysis complete! Processed {len(uploaded_files)} images in {total_time:.1f} seconds")
     st.rerun()
 
 def display_results():

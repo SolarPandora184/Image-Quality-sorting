@@ -163,7 +163,7 @@ def is_supported_image_format(filename: str) -> bool:
     Returns:
         True if format is supported, False otherwise
     """
-    supported_extensions = {'.png', '.jpg', '.jpeg', '.bmp', '.tiff', '.tif'}
+    supported_extensions = {'.png', '.jpg', '.jpeg', '.bmp', '.tiff', '.tif', '.webp'}
     return get_file_extension(filename) in supported_extensions
 
 def calculate_processing_stats(results: List[Dict[str, Any]]) -> Dict[str, Any]:

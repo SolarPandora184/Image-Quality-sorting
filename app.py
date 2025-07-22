@@ -135,6 +135,10 @@ def analyze_images(uploaded_files):
             st.warning(f"⚠️ Too many images ({len(uploaded_files)}). Processing only the first {max_images} images to prevent crashes.")
             uploaded_files = uploaded_files[:max_images]
         
+        # Additional break for large batches
+        if len(uploaded_files) > 25:
+            st.info("📦 Large batch detected. Processing will include 2-second breaks every 5 images to prevent crashes.")
+        
         # Progress tracking with estimated time
         progress_bar = st.progress(0)
         status_text = st.empty()
@@ -213,6 +217,9 @@ def analyze_images(uploaded_files):
                 # Force garbage collection every 5 images to free memory
                 if (i + 1) % 5 == 0:
                     gc.collect()
+                    # Take a 2-second break to prevent crashes
+                    status_text.text(f"Taking a 2-second break to prevent crashes... ({i+1}/{len(uploaded_files)})")
+                    time.sleep(2)
                     
                 # Clear variables to free memory
                 del image_array, opencv_image

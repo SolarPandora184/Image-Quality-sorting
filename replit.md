@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is a Streamlit-based web application for bulk image quality assessment. The system analyzes multiple uploaded images to detect quality issues such as blur, overexposure, underexposure, and streaks. It provides a user-friendly interface for uploading images, viewing analysis results, and downloading organized image sets.
+This is a Streamlit-based web application for bulk image quality assessment. The system analyzes multiple uploaded images to detect quality issues such as blur, overexposure, underexposure, and streaks. It provides a user-friendly interface for uploading images (including ZIP file support), viewing analysis results, and downloading organized image sets. The project is fully configured for both Replit deployment and GitHub Pages hosting.
 
 ## User Preferences
 
@@ -14,7 +14,8 @@ Preferred communication style: Simple, everyday language.
 - **Framework**: Streamlit web framework
 - **Layout**: Wide layout configuration for better image display
 - **State Management**: Streamlit session state for maintaining analysis results and uploaded images across interactions
-- **File Handling**: Multi-file upload support with format validation
+- **File Handling**: Multi-file upload support with format validation and ZIP file extraction
+- **GitHub Pages**: Professional landing page with application redirect functionality
 
 ### Backend Architecture
 - **Processing Engine**: OpenCV for image processing and analysis
@@ -44,14 +45,24 @@ Preferred communication style: Simple, everyday language.
 - **Purpose**: Helper functions for file operations and data organization
 - **Functions**:
   - ZIP file creation for downloading image sets
+  - ZIP file extraction for bulk image uploads
   - Image organization by quality categories
   - Safe filename handling and path management
 
+### GitHub Pages Integration (`docs/index.html`)
+- **Purpose**: Professional landing page for GitHub Pages deployment
+- **Features**:
+  - Responsive design with modern styling
+  - Feature showcase and application description
+  - Automatic redirection to live application
+  - Mobile-friendly interface
+
 ## Data Flow
 
-1. **Upload Phase**: Users upload multiple images through Streamlit file uploader
-2. **Validation**: File format validation (PNG, JPG, JPEG, BMP, TIFF)
-3. **Analysis Phase**: Each image is processed through the quality analyzer
+1. **Upload Phase**: Users upload multiple images directly or through ZIP files via tabbed interface
+2. **Extraction Phase**: ZIP files are automatically extracted to find supported image formats
+3. **Validation**: File format validation (PNG, JPG, JPEG, BMP, TIFF, WebP)
+4. **Analysis Phase**: Each image is processed through the quality analyzer
 4. **Processing Steps**:
    - Image conversion to appropriate formats (BGR, grayscale)
    - Blur detection using Laplacian variance
@@ -94,3 +105,12 @@ Preferred communication style: Simple, everyday language.
 - **UI Layout**: Responsive wide layout for optimal image viewing experience
 
 The system is designed as a self-contained web application with no external database requirements, making it suitable for standalone deployment or integration into larger systems.
+
+## Recent Changes (July 22, 2025)
+
+- **Migration to Replit**: Successfully migrated from Replit Agent to standard Replit environment
+- **ZIP File Support**: Added capability to upload and extract images from ZIP files
+- **GitHub Pages Integration**: Created professional landing page for GitHub Pages deployment
+- **Enhanced UI**: Implemented tabbed interface for different upload methods
+- **Documentation**: Added comprehensive README.md and project documentation
+- **Security**: Ensured proper client/server separation and secure file handling

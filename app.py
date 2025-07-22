@@ -7,7 +7,7 @@ import zipfile
 import io
 import os
 from image_analyzer import ImageQualityAnalyzer
-from utils import create_download_zip, organize_images_by_quality
+from utils import create_download_zip, organize_images_by_quality, extract_images_from_zip
 
 def main():
     st.set_page_config(
@@ -27,14 +27,54 @@ def main():
     
     # File upload section
     st.header("📁 Upload Images")
-    st.info("💡 **Tip**: You can select hundreds of images at once! The system supports up to 1GB total upload size.")
+    st.info("💡 **Tip**: You can select hundreds of images at once or upload a ZIP file containing images! The system supports up to 1GB total upload size.")
     
-    uploaded_files = st.file_uploader(
-        "Choose image files (select multiple images using Ctrl/Cmd + click)",
-        type=['png', 'jpg', 'jpeg', 'bmp', 'tiff', 'webp'],
-        accept_multiple_files=True,
-        help="Supported formats: PNG, JPG, JPEG, BMP, TIFF, WebP. Maximum total size: 1GB. Select multiple files using Ctrl/Cmd + click or Ctrl/Cmd + A to select all."
-    )
+    # Add tabs for different upload methods
+    upload_tab1, upload_tab2 = st.tabs(["📸 Upload Images", "📦 Upload ZIP File"])
+    
+    uploaded_files = None
+    
+    with upload_tab1:
+        uploaded_files = st.file_uploader(
+            "Choose image files (select multiple images using Ctrl/Cmd + click)",
+            type=['png', 'jpg', 'jpeg', 'bmp', 'tiff', 'webp'],
+            accept_multiple_files=True,
+            help="Supported formats: PNG, JPG, JPEG, BMP, TIFF, WebP. Maximum total size: 1GB. Select multiple files using Ctrl/Cmd + click or Ctrl/Cmd + A to select all."
+        )
+    
+    with upload_tab2:
+        zip_file = st.file_uploader(
+            "Choose a ZIP file containing images",
+            type=['zip'],
+            help="Upload a ZIP file containing images. The system will extract and process all supported image formats."
+        )
+        
+        if zip_file:
+            with st.spinner("Extracting images from ZIP file..."):
+                extracted_files = extract_images_from_zip(zip_file.getvalue())
+                
+            if extracted_files:
+                st.success(f"✅ Successfully extracted {len(extracted_files)} images from ZIP file!")
+                
+                # Convert extracted files to format expected by the rest of the app
+                class FakeUploadedFile:
+                    def __init__(self, filename, data):
+                        self.name = filename
+                        self._data = data
+                    
+                    def getvalue(self):
+                        return self._data
+                
+                uploaded_files = [FakeUploadedFile(f['filename'], f['data']) for f in extracted_files]
+                
+                # Show file list
+                with st.expander(f"📋 View all {len(uploaded_files)} extracted files"):
+                    for i, file in enumerate(uploaded_files, 1):
+                        file_size_mb = len(file.getvalue()) / (1024 * 1024)
+                        st.text(f"{i:3d}. {file.name} ({file_size_mb:.1f} MB)")
+            else:
+                st.error("❌ No supported images found in the ZIP file. Make sure your ZIP contains PNG, JPG, JPEG, BMP, TIFF, or WebP files.")
+                uploaded_files = None
     
     if uploaded_files:
         # Calculate total file size

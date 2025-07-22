@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bulk Image Quality Assessment System</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+        
+        .container {
+            text-align: center;
+            max-width: 600px;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+            opacity: 0.9;
+        }
+        
+        .feature-list {
+            text-align: left;
+            margin: 2rem 0;
+            padding: 0;
+            list-style: none;
+        }
+        
+        .feature-list li {
+            padding: 0.5rem 0;
+            opacity: 0.9;
+        }
+        
+        .feature-list li::before {
+            content: "✅ ";
+            margin-right: 0.5rem;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            padding: 1rem 2rem;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            margin: 1rem;
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .note {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        @media (max-width: 768px) {
+            h1 { font-size: 2rem; }
+            p { font-size: 1rem; }
+            .container { padding: 1rem; margin: 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📸 Bulk Image Quality Assessment</h1>
+        <p>Professional image quality analysis tool for photographers, content creators, and digital asset managers.</p>
+        
+        <ul class="feature-list">
+            <li>Analyze hundreds of images at once</li>
+            <li>Detect blur, overexposure, and underexposure</li>
+            <li>Upload ZIP files for bulk processing</li>
+            <li>Automatic quality categorization</li>
+            <li>Download organized image sets</li>
+        </ul>
+        
+        <a href="#" id="launchApp" class="cta-button">🚀 Launch Application</a>
+        
+        <div class="note">
+            <strong>Note:</strong> This application requires a Streamlit server to run. 
+            Click the button above to access the full application on Replit or your deployed server.
+        </div>
+    </div>
+    
+    <script>
+        document.getElementById('launchApp').addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Try to detect if we're on GitHub Pages and redirect to Replit
+            const currentHost = window.location.hostname;
+            
+            if (currentHost.includes('github.io') || currentHost.includes('githubusercontent.com')) {
+                // Redirect to your Replit app
+                window.open('https://your-replit-url.replit.app', '_blank');
+            } else {
+                // If running locally or on a server, try to access the Streamlit app
+                window.location.href = 'http://localhost:5000';
+            }
+        });
+    </script>
+</body>
+</html>

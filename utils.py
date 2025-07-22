@@ -3,6 +3,45 @@ import io
 from typing import List, Dict, Any
 import os
 
+def extract_images_from_zip(zip_file_bytes: bytes) -> List[Dict[str, Any]]:
+    """
+    Extract images from a ZIP file.
+    
+    Args:
+        zip_file_bytes: ZIP file as bytes
+        
+    Returns:
+        List of dictionaries containing filename and file data
+    """
+    extracted_files = []
+    supported_extensions = ('.png', '.jpg', '.jpeg', '.bmp', '.tiff', '.webp')
+    
+    try:
+        with zipfile.ZipFile(io.BytesIO(zip_file_bytes), 'r') as zip_ref:
+            for file_info in zip_ref.filelist:
+                # Skip directories and hidden files
+                if file_info.is_dir() or file_info.filename.startswith('.'):
+                    continue
+                
+                # Check if file has supported extension
+                if file_info.filename.lower().endswith(supported_extensions):
+                    try:
+                        file_data = zip_ref.read(file_info.filename)
+                        # Create a fake uploaded file object
+                        extracted_files.append({
+                            'filename': os.path.basename(file_info.filename),
+                            'data': file_data,
+                            'size': len(file_data)
+                        })
+                    except Exception as e:
+                        print(f"Error extracting {file_info.filename}: {e}")
+                        continue
+    except Exception as e:
+        print(f"Error reading ZIP file: {e}")
+        return []
+    
+    return extracted_files
+
 def create_download_zip(images: List[Dict[str, Any]], category: str) -> bytes:
     """
     Create a ZIP file containing images from a specific category.

@@ -22,7 +22,7 @@ A professional Streamlit-based web application for bulk image quality assessment
 2. **Run automatically:** The Streamlit app will start automatically
 3. **Access your app:** Use the provided URL to access your running application
 
-**Direct Replit Link:** [Open in Replit](https://replit.com/@yourusername/your-repl-name)
+**Direct Replit Link:** [Open in Replit](https://replit.com/@Noelleuhl/Image-Quality-sorting)
 
 ### Running Locally
 1. Install dependencies:

@@ -264,11 +264,71 @@ def analyze_images(uploaded_files):
     st.success(f"✅ Analysis complete! Successfully processed {successful}/{len(uploaded_files)} images in {total_time:.1f} seconds")
     st.rerun()
 
+def recalculate_results_with_new_thresholds(original_results, blur_thresh, overexp_thresh, underexp_thresh, streak_thresh):
+    """Recalculate quality assessment with new thresholds"""
+    updated_results = []
+    
+    for result in original_results:
+        if result['overall_quality'] == 'Error':
+            updated_results.append(result)
+            continue
+            
+        # Get original scores
+        scores = result['scores']
+        
+        # Determine issues based on new thresholds
+        issues = []
+        
+        if scores.get('blur_score', 0) < blur_thresh:
+            issues.append("Blurry")
+        
+        if scores.get('overexposure_percentage', 0) > overexp_thresh:
+            issues.append("Overexposed")
+        
+        if scores.get('underexposure_percentage', 0) > underexp_thresh:
+            issues.append("Underexposed")
+        
+        if scores.get('streak_score', 0) > streak_thresh:
+            issues.append("Streaky")
+        
+        # Determine overall quality
+        overall_quality = "Good" if not issues else "Poor"
+        
+        # Update result
+        updated_result = result.copy()
+        updated_result['overall_quality'] = overall_quality
+        updated_result['issues'] = issues
+        
+        updated_results.append(updated_result)
+    
+    return updated_results
+
 def display_results():
     """Display analysis results in a organized format"""
     st.header("📊 Analysis Results")
     
-    results = st.session_state.analysis_results
+    # Sensitivity adjustment section
+    st.subheader("🎛️ Adjust Quality Sensitivity")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        st.write("**Detection Thresholds:**")
+        blur_threshold = st.slider("Blur Sensitivity", 50.0, 200.0, 100.0, 10.0, 
+                                 help="Lower = more sensitive to blur")
+        overexp_threshold = st.slider("Overexposure Sensitivity", 0.01, 0.20, 0.05, 0.01,
+                                    help="Lower = more sensitive to bright areas")
+    with col2:
+        st.write("**Additional Settings:**")
+        underexp_threshold = st.slider("Underexposure Sensitivity", 0.01, 0.20, 0.05, 0.01,
+                                     help="Lower = more sensitive to dark areas") 
+        streak_threshold = st.slider("Streak Sensitivity", 0.3, 1.0, 0.7, 0.1,
+                                   help="Lower = more sensitive to streaks/patterns")
+    
+    # Recalculate results with new thresholds
+    original_results = st.session_state.analysis_results
+    results = recalculate_results_with_new_thresholds(
+        original_results, blur_threshold, overexp_threshold, underexp_threshold, streak_threshold
+    )
     
     # Create summary statistics
     total_images = len(results)
@@ -287,7 +347,34 @@ def display_results():
     with col4:
         st.metric("Processing Errors", errors)
     
+    # Selective Download Options
+    st.subheader("📥 Selective Download Options")
+    
+    # Count images by quality
+    good_count = len([r for r in results if r['overall_quality'] == 'Good'])
+    poor_count = len([r for r in results if r['overall_quality'] == 'Poor'])
+    total_count = len([r for r in results if r['overall_quality'] != 'Error'])
+    
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        if st.button(f"📥 Download Good Quality Only ({good_count})", type="primary"):
+            download_filtered_images(results, "Good")
+    
+    with col2:
+        if st.button(f"📥 Download Good + Poor ({total_count})", type="secondary"):
+            download_filtered_images(results, "All")
+    
+    with col3:
+        if st.button(f"📥 Download Poor Quality Only ({poor_count})"):
+            download_filtered_images(results, "Poor")
+    
+    with col4:
+        if st.button("📥 Download All (Original)"):
+            download_all_images()
+    
     # Create detailed results table
+    st.subheader("📋 Detailed Results")
     df_data = []
     for result in results:
         issues_str = ", ".join(result['issues']) if result['issues'] else "None"
@@ -368,6 +455,82 @@ def filter_results_by_option(results, filter_option):
     elif filter_option == "Errors":
         return [r for r in results if r['overall_quality'] == 'Error']
     return results
+
+def download_filtered_images(results, quality_filter):
+    """Create and download ZIP file with filtered images"""
+    try:
+        from io import BytesIO
+        import zipfile
+        
+        # Filter results based on quality
+        if quality_filter == "Good":
+            filtered_results = [r for r in results if r['overall_quality'] == 'Good']
+        elif quality_filter == "Poor":
+            filtered_results = [r for r in results if r['overall_quality'] == 'Poor']
+        elif quality_filter == "All":
+            filtered_results = [r for r in results if r['overall_quality'] != 'Error']
+        else:
+            filtered_results = results
+        
+        if not filtered_results:
+            st.error("No images match the selected quality filter.")
+            return
+        
+        # Create ZIP file in memory
+        zip_buffer = BytesIO()
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            for result in filtered_results:
+                if result.get('image_data'):
+                    # Add image to ZIP
+                    zip_file.writestr(result['filename'], result['image_data'])
+        
+        zip_buffer.seek(0)
+        
+        # Create download button
+        filename = f"{quality_filter.lower()}_quality_images.zip"
+        st.download_button(
+            label=f"💾 Download {quality_filter} Quality ZIP ({len(filtered_results)} images)",
+            data=zip_buffer.getvalue(),
+            file_name=filename,
+            mime="application/zip",
+            key=f"download_{quality_filter.lower()}"
+        )
+        
+        st.success(f"✅ {quality_filter} quality ZIP prepared with {len(filtered_results)} images!")
+        
+    except Exception as e:
+        st.error(f"Error creating download: {str(e)}")
+
+def download_all_images():
+    """Download all original images"""
+    try:
+        results = st.session_state.analysis_results
+        uploaded_files = st.session_state.uploaded_images
+        
+        from io import BytesIO
+        import zipfile
+        
+        # Create ZIP file with all original images
+        zip_buffer = BytesIO()
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            for uploaded_file in uploaded_files:
+                uploaded_file.seek(0)  # Reset file pointer
+                zip_file.writestr(uploaded_file.name, uploaded_file.getvalue())
+        
+        zip_buffer.seek(0)
+        
+        st.download_button(
+            label=f"💾 Download All Original Images ZIP ({len(uploaded_files)} images)",
+            data=zip_buffer.getvalue(),
+            file_name="all_original_images.zip",
+            mime="application/zip",
+            key="download_all_original"
+        )
+        
+        st.success(f"✅ All original images ZIP prepared with {len(uploaded_files)} images!")
+        
+    except Exception as e:
+        st.error(f"Error creating download: {str(e)}")
 
 def display_download_options():
     """Display download options for processed images"""

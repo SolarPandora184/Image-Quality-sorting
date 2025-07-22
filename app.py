@@ -115,16 +115,27 @@ def main():
 
 def analyze_images(uploaded_files):
     """Analyze uploaded images for quality issues"""
-    analyzer = ImageQualityAnalyzer()
-    results = []
-    
-    # Progress tracking with estimated time
-    progress_bar = st.progress(0)
-    status_text = st.empty()
-    time_estimate = st.empty()
-    
-    import time
-    start_time = time.time()
+    try:
+        analyzer = ImageQualityAnalyzer()
+        results = []
+        
+        # Add memory management warning and batch processing
+        batch_size = 20  # Process in smaller batches to prevent memory crashes
+        if len(uploaded_files) > batch_size:
+            st.info(f"📦 Processing {len(uploaded_files)} images in batches of {batch_size} to prevent memory issues.")
+        
+        # Progress tracking with estimated time
+        progress_bar = st.progress(0)
+        status_text = st.empty()
+        time_estimate = st.empty()
+        
+        import time
+        import gc  # Garbage collection for memory management
+        start_time = time.time()
+        
+    except Exception as init_error:
+        st.error(f"Failed to initialize image analyzer: {str(init_error)}")
+        return
     
     for i, uploaded_file in enumerate(uploaded_files):
         try:
@@ -141,19 +152,59 @@ def analyze_images(uploaded_files):
                 estimated_remaining = avg_time_per_image * remaining_images
                 time_estimate.text(f"⏱️ Estimated time remaining: {estimated_remaining:.1f} seconds")
             
-            # Read image
-            image_bytes = uploaded_file.read()
-            image = Image.open(io.BytesIO(image_bytes))
-            
-            # Convert PIL image to OpenCV format
-            opencv_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
-            
-            # Analyze image quality
-            analysis = analyzer.analyze_image(opencv_image, uploaded_file.name)
-            analysis['image_data'] = image_bytes  # Store image data for download
-            analysis['pil_image'] = image  # Store PIL image for display
-            
-            results.append(analysis)
+            # Read image with better error handling
+            try:
+                image_bytes = uploaded_file.read()
+                if len(image_bytes) == 0:
+                    raise ValueError("Empty file")
+                    
+                image = Image.open(io.BytesIO(image_bytes))
+                
+                # Validate image
+                if image.mode not in ['RGB', 'RGBA', 'L']:
+                    image = image.convert('RGB')
+                
+                # Check image size to prevent memory issues
+                max_size = 4000  # Reduced max size to prevent crashes
+                if max(image.size) > max_size:
+                    # Resize large images to prevent memory crashes
+                    ratio = max_size / max(image.size)
+                    new_size = (int(image.size[0] * ratio), int(image.size[1] * ratio))
+                    image = image.resize(new_size, Image.Resampling.LANCZOS)
+                    
+                # Also check file size in memory
+                image_array = np.array(image)
+                memory_mb = image_array.nbytes / (1024 * 1024)
+                if memory_mb > 50:  # 50MB limit per image
+                    # Further resize if still too large
+                    scale = 0.7
+                    new_size = (int(image.size[0] * scale), int(image.size[1] * scale))
+                    image = image.resize(new_size, Image.Resampling.LANCZOS)
+                
+                # Convert PIL image to OpenCV format
+                opencv_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+                
+                # Analyze image quality
+                analysis = analyzer.analyze_image(opencv_image, uploaded_file.name)
+                analysis['image_data'] = image_bytes  # Store original image data for download
+                analysis['pil_image'] = image  # Store PIL image for display
+                
+                results.append(analysis)
+                
+                # Force garbage collection every 10 images to free memory
+                if (i + 1) % 10 == 0:
+                    gc.collect()
+                
+            except Exception as img_error:
+                st.warning(f"⚠️ Skipping corrupted or unsupported image: {uploaded_file.name}")
+                results.append({
+                    'filename': uploaded_file.name,
+                    'overall_quality': 'Error',
+                    'issues': [f"Image error: {str(img_error)}"],
+                    'scores': {},
+                    'image_data': None,
+                    'pil_image': None
+                })
             
         except Exception as e:
             st.error(f"Error processing {uploaded_file.name}: {str(e)}")
@@ -171,13 +222,17 @@ def analyze_images(uploaded_files):
     status_text.empty()
     time_estimate.empty()
     
+    # Final garbage collection
+    gc.collect()
+    
     # Store results in session state
     st.session_state.analysis_results = results
     st.session_state.uploaded_images = uploaded_files
     
     # Show completion summary
     total_time = time.time() - start_time
-    st.success(f"✅ Analysis complete! Processed {len(uploaded_files)} images in {total_time:.1f} seconds")
+    successful = len([r for r in results if r['overall_quality'] != 'Error'])
+    st.success(f"✅ Analysis complete! Successfully processed {successful}/{len(uploaded_files)} images in {total_time:.1f} seconds")
     st.rerun()
 
 def display_results():

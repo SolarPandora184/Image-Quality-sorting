@@ -17,11 +17,15 @@ A professional Streamlit-based web application for bulk image quality assessment
 
 ## 🚀 Quick Start
 
-### Running on Replit
-1. **Fork this Repl:** Click the "Fork" button to create your own copy
-2. **Run automatically:** The Streamlit app will start automatically
-3. **Access your app:** Use the provided URL to access your running application
+### Deploy to Streamlit Community Cloud (Recommended)
+1. **Upload to GitHub:** Copy all files to a new GitHub repository
+2. **Rename file:** Change `streamlit_requirements.txt` to `requirements.txt`
+3. **Deploy:** Go to [share.streamlit.io](https://share.streamlit.io) and connect your GitHub repo
+4. **Go live:** Your app will be available at `your-app-name.streamlit.app`
 
+📖 **Detailed Guide:** See [DEPLOYMENT.md](DEPLOYMENT.md) for step-by-step instructions
+
+### Running on Replit (Alternative)
 **Direct Replit Link:** [Open in Replit](https://replit.com/@Noelleuhl/Image-Quality-sorting)
 
 ### Running Locally

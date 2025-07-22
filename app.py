@@ -44,37 +44,45 @@ def main():
     
     with upload_tab2:
         zip_file = st.file_uploader(
-            "Choose a ZIP file containing images",
+            "Choose a ZIP file containing images (up to 1GB)",
             type=['zip'],
-            help="Upload a ZIP file containing images. The system will extract and process all supported image formats."
+            help="Upload a ZIP file containing images. The system will extract and process all supported image formats. Maximum size: 1GB."
         )
         
         if zip_file:
-            with st.spinner("Extracting images from ZIP file..."):
-                extracted_files = extract_images_from_zip(zip_file.getvalue())
-                
-            if extracted_files:
-                st.success(f"✅ Successfully extracted {len(extracted_files)} images from ZIP file!")
-                
-                # Convert extracted files to format expected by the rest of the app
-                class FakeUploadedFile:
-                    def __init__(self, filename, data):
-                        self.name = filename
-                        self._data = data
-                    
-                    def getvalue(self):
-                        return self._data
-                
-                uploaded_files = [FakeUploadedFile(f['filename'], f['data']) for f in extracted_files]
-                
-                # Show file list
-                with st.expander(f"📋 View all {len(uploaded_files)} extracted files"):
-                    for i, file in enumerate(uploaded_files, 1):
-                        file_size_mb = len(file.getvalue()) / (1024 * 1024)
-                        st.text(f"{i:3d}. {file.name} ({file_size_mb:.1f} MB)")
-            else:
-                st.error("❌ No supported images found in the ZIP file. Make sure your ZIP contains PNG, JPG, JPEG, BMP, TIFF, or WebP files.")
+            # Check ZIP file size
+            zip_size_mb = len(zip_file.getvalue()) / (1024 * 1024)
+            st.info(f"📦 ZIP file size: {zip_size_mb:.1f} MB")
+            
+            if zip_size_mb > 1024:  # 1GB limit
+                st.error("❌ ZIP file is too large. Maximum size is 1GB (1024 MB).")
                 uploaded_files = None
+            else:
+                with st.spinner("Extracting images from ZIP file..."):
+                    extracted_files = extract_images_from_zip(zip_file.getvalue())
+                
+                if extracted_files:
+                    st.success(f"✅ Successfully extracted {len(extracted_files)} images from ZIP file!")
+                    
+                    # Convert extracted files to format expected by the rest of the app
+                    class FakeUploadedFile:
+                        def __init__(self, filename, data):
+                            self.name = filename
+                            self._data = data
+                        
+                        def getvalue(self):
+                            return self._data
+                    
+                    uploaded_files = [FakeUploadedFile(f['filename'], f['data']) for f in extracted_files]
+                    
+                    # Show file list
+                    with st.expander(f"📋 View all {len(uploaded_files)} extracted files"):
+                        for i, file in enumerate(uploaded_files, 1):
+                            file_size_mb = len(file.getvalue()) / (1024 * 1024)
+                            st.text(f"{i:3d}. {file.name} ({file_size_mb:.1f} MB)")
+                else:
+                    st.error("❌ No supported images found in the ZIP file. Make sure your ZIP contains PNG, JPG, JPEG, BMP, TIFF, or WebP files.")
+                    uploaded_files = None
     
     if uploaded_files:
         # Calculate total file size

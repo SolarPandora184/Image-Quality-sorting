@@ -132,10 +132,10 @@ class ImageQualityAnalyzer:
             contrast_std = np.std(gray)
             
             return {
-                'overexposure_percentage': overexposure_percentage,
-                'underexposure_percentage': underexposure_percentage,
-                'brightness_mean': brightness_mean,
-                'contrast_std': contrast_std
+                'overexposure_percentage': float(overexposure_percentage),
+                'underexposure_percentage': float(underexposure_percentage),
+                'brightness_mean': float(brightness_mean),
+                'contrast_std': float(contrast_std)
             }
             
         except Exception:
@@ -230,8 +230,8 @@ class ImageQualityAnalyzer:
                 compression_score /= block_count
             
             return {
-                'noise_score': noise_score,
-                'compression_score': compression_score
+                'noise_score': float(noise_score),
+                'compression_score': float(compression_score)
             }
             
         except Exception:

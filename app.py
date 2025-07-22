@@ -104,9 +104,14 @@ def main():
         if len(uploaded_files) > 100:
             st.warning(f"⚠️ You've uploaded {len(uploaded_files)} images. Processing may take several minutes. Consider analyzing in smaller batches for faster results.")
         
-        # Analyze button
-        if st.button("🔍 Analyze Images", type="primary"):
-            analyze_images(uploaded_files)
+        # Analyze button with additional warning
+        col1, col2 = st.columns([1, 3])
+        with col1:
+            if st.button("🔍 Analyze Images", type="primary"):
+                analyze_images(uploaded_files)
+        with col2:
+            if len(uploaded_files) > 50:
+                st.error("⚠️ Large batch detected! For best results, try smaller batches (under 50 images).")
     
     # Display results if analysis is complete
     if st.session_state.analysis_results is not None:
@@ -120,9 +125,15 @@ def analyze_images(uploaded_files):
         results = []
         
         # Add memory management warning and batch processing
-        batch_size = 20  # Process in smaller batches to prevent memory crashes
+        batch_size = 10  # Smaller batches to prevent memory crashes
         if len(uploaded_files) > batch_size:
             st.info(f"📦 Processing {len(uploaded_files)} images in batches of {batch_size} to prevent memory issues.")
+        
+        # Limit total number of images to prevent crashes
+        max_images = 100
+        if len(uploaded_files) > max_images:
+            st.warning(f"⚠️ Too many images ({len(uploaded_files)}). Processing only the first {max_images} images to prevent crashes.")
+            uploaded_files = uploaded_files[:max_images]
         
         # Progress tracking with estimated time
         progress_bar = st.progress(0)
@@ -164,36 +175,47 @@ def analyze_images(uploaded_files):
                 if image.mode not in ['RGB', 'RGBA', 'L']:
                     image = image.convert('RGB')
                 
-                # Check image size to prevent memory issues
-                max_size = 4000  # Reduced max size to prevent crashes
+                # Aggressive image size reduction to prevent memory issues
+                max_size = 2000  # Further reduced max size
                 if max(image.size) > max_size:
-                    # Resize large images to prevent memory crashes
                     ratio = max_size / max(image.size)
                     new_size = (int(image.size[0] * ratio), int(image.size[1] * ratio))
                     image = image.resize(new_size, Image.Resampling.LANCZOS)
-                    
-                # Also check file size in memory
+                
+                # Additional memory check - force smaller images
                 image_array = np.array(image)
                 memory_mb = image_array.nbytes / (1024 * 1024)
-                if memory_mb > 50:  # 50MB limit per image
-                    # Further resize if still too large
-                    scale = 0.7
+                if memory_mb > 20:  # Much stricter 20MB limit per image
+                    scale = 0.5  # More aggressive scaling
                     new_size = (int(image.size[0] * scale), int(image.size[1] * scale))
                     image = image.resize(new_size, Image.Resampling.LANCZOS)
+                
+                # Final size check
+                if max(image.size) > 1500:
+                    image = image.resize((1500, 1500), Image.Resampling.LANCZOS)
                 
                 # Convert PIL image to OpenCV format
                 opencv_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
                 
                 # Analyze image quality
                 analysis = analyzer.analyze_image(opencv_image, uploaded_file.name)
-                analysis['image_data'] = image_bytes  # Store original image data for download
-                analysis['pil_image'] = image  # Store PIL image for display
+                
+                # Don't store large image data to save memory - only store if small
+                if len(image_bytes) < 5 * 1024 * 1024:  # Only store if less than 5MB
+                    analysis['image_data'] = image_bytes
+                    analysis['pil_image'] = image
+                else:
+                    analysis['image_data'] = None
+                    analysis['pil_image'] = None
                 
                 results.append(analysis)
                 
-                # Force garbage collection every 10 images to free memory
-                if (i + 1) % 10 == 0:
+                # Force garbage collection every 5 images to free memory
+                if (i + 1) % 5 == 0:
                     gc.collect()
+                    
+                # Clear variables to free memory
+                del image_array, opencv_image
                 
             except Exception as img_error:
                 st.warning(f"⚠️ Skipping corrupted or unsupported image: {uploaded_file.name}")
